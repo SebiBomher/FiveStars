@@ -1,0 +1,29 @@
+1) Sistem de Friend:
+	-Sa pot cauta pe cineva
+	-Sa ii pot da friend request
+	-Pending/accepted/rejected
+	-Optional: Sistem de Follow
+2)Sistem de Rating:
+	-Sa poti da o nota unei persoane, pagini
+	-Scor general
+	-Media scorurilor
+	-Sa poti da anonim/ne-anonim
+3)Newsfeed:
+	-Incarcare poza cu descriere
+	-Sa poti comenta
+	-Note (1-5)
+	-Comentarii:
+		--Note
+		--Afisare corecta
+		--Optiune de afisare cronologica, relevanta
+4)Entitati:
+	-Profil, cu detalii
+	-Pagina
+	-Eveniment
+5)Search Bar:
+	-Cautare rapida
+	-Cautare specifica(vreau doar poze, profile sau ceva speciffic)
+6)Extras:
+	-Login cu recunoastere faciala
+	-Harta cu locatii + bitmoji
+	-Match System(un fel de tinder dar si pentru prietenii)
