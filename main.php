@@ -6,6 +6,10 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
+$idSession = $_SESSION['id'];
+$profile = new Profile();
+$server = new Functions();
+$profile = $server->get_profile($idSession);
 
 ?>
 
@@ -32,7 +36,15 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
       </li>
     </ul>
     <ul class="navbar-nav ml-auto">
-     <li class="nav-item active">
+      <li class="nav-item active">
+        <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
+        <?php
+        $profile1 = $server->get_profile($idSession);
+        $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
+        ?>
+      <?php endif ?>
+    </li>
+    <li class="nav-item active">
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
       <?php $userNameSurname = "profile.php?user=".$_SESSION['id']; ?>
       <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>

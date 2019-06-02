@@ -38,7 +38,8 @@ $profile = $server->get_profile($idSession);
      <li class="nav-item active">
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
       <?php
-      $server->show_smallprofilephoto($server->get_imageblob($profile->get_profile_photo_id()));
+      $profile1 = $server->get_profile($idSession);
+        $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
       ?>
     <?php endif ?>
   </li>
@@ -85,6 +86,7 @@ $profile = $server->get_profile($idSession);
     $sql = "SELECT * FROM user WHERE name LIKE '%$query%' OR surname LIKE '%$query%'";
     $result = mysqli_query($db, $sql);
     while ($row = mysqli_fetch_assoc($result)){
+      $server->show_profilephotoicon($server->get_imageblob($row['profile_photo_id']));
       echo '<a class="nav-link" href="profile.php?user='.$row['Id'].'">'.$row['Name']." ".$row['Surname'].'<span class="sr-only">(current)</span></a>';
     }
   //header('location: search.php');

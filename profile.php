@@ -10,7 +10,7 @@ $idSession = $_SESSION['id'];
 $idCurrentProfile = $_GET['user'];
 $profile = new Profile();
 $server = new Functions();
-$profile = $server->get_profile($idSession);
+$profile = $server->get_profile($idCurrentProfile);
 ?>
 
 <!DOCTYPE html>
@@ -39,7 +39,8 @@ $profile = $server->get_profile($idSession);
       <li class="nav-item active">
         <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
         <?php
-        $server->show_smallprofilephoto($server->get_imageblob($profile->get_profile_photo_id()));
+        $profile1 = $server->get_profile($idSession);
+        $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
         ?>
       <?php endif ?>
     </li>
@@ -126,7 +127,7 @@ $profile = $server->get_profile($idSession);
 </div>
 <?php  if (isset($_SESSION['id']) && $_SESSION['id'] != $idCurrentProfile) : ?>
   <form class="form" action="server.php "method="POST">
-    <input class="btn btn-defaulttype d-none" type="file" name="id" placeholder=<?php echo $idCurrentProfile;?> >
+    <input class="text d-none" type="text" name="id" value=<?php echo $idCurrentProfile;?> >
     <button type="submit" class="btn btn-default" name="send_friend_request">Add friend</button>
   </form>
 <?php endif ?>

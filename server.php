@@ -52,7 +52,7 @@ if (isset($_POST['reg_user'])) {
 
   	if (empty($phone)) $phone = NULL;
   	$query = "INSERT INTO user (Name, Surname, Email, Password, Score, Rating, profile_photo_id, cover_photo_id) 
-  	VALUES('$name','$surname', '$email', '$password', 1000, 3.5, 4, 3)";
+  	VALUES('$name','$surname', '$email', '$password', 1000, 3.5, 4, 75)";
   	
   	mysqli_query($db, $query);
   	$_SESSION['id'] = $id;
@@ -144,7 +144,7 @@ if (isset($_POST['upload_article'])){
 		}
 	}
 	
-	header('location: profile.php');
+	header('location: profile.php?user='.$_SESSION['id']);
 }
 
 if (isset($_POST['view_photo'])){
@@ -159,10 +159,25 @@ if (isset($_POST['send_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
 	$sql = "SELECT * FROM friendship WHERE User2 = $id";
 	$result = mysqli_query($db, $sql);
-	if (mysqli_num_rows($result) == 0)
+	echo 'kkt1';
+	if (!$result || mysqli_num_rows($result) == 0)
 	{
-		$sql = "INSERT INTO friendship (User1, User2, Status) Valuse ('$_SESSION['id']','$id', 0)";
+		$sql = "INSERT INTO friendship (User1, User2, Status) VALUES ('$_SESSION[id]','$id', 0)";
 		mysqli_query($db, $sql);
+		echo 'kkt2';
+	}
+	//header('location: profile.php?user='.$_SESSION['id']);
+}
+function recive_friendRequest($id){
+	$sql = "SELECT User1 FROM friendship WHERE User2 = $id";
+	$result = mysqli_query($db, $sql);
+	while ($row = mysqli_fetch_assoc($result)){
+		$idFriend = $row['User1'];
+		$sql1 = "SELECT * FROM user WHERE id = $idFriend";
+		$result1 = mysqli_query($db, $sql);
+		$row1 = mysqli_fetch_row($results1);
+		echo '<a class="dropdown-item" href="#">'.$row1['Name']." ".$row1['Surname'].' has sent you a friend request!</a>';
 	}
 }
+
 ?>
