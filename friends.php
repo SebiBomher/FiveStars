@@ -41,7 +41,7 @@ $profile = $server->get_profile($idSession);
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
       <?php
       $profile1 = $server->get_profile($idSession);
-        $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
+      $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
       ?>
     <?php endif ?>
   </li>
@@ -90,7 +90,42 @@ $profile = $server->get_profile($idSession);
   </li>
 </ul>
 <div class="container mt-3">
-  
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Photo</th>
+        <th scope="col">Name</th>
+      </tr>
+    </thead>
+    <?php
+    $profiles = array();
+    $functions = new Functions;
+    if (isset($_SESSION['id']))
+      $functions->recive_friends($_SESSION['id'],$profiles);
+    ?>
+    <tbody>
+
+      <?php
+      for ($i = 0; $i < sizeof($profiles); $i = $i + 1)
+      {
+        ?>
+        <tr>
+          <td>
+            <?php
+            $server->show_profilephotoicon($server->get_imageblob($profiles[$i]->get_profile_photo_id()));
+            ?>
+          </td>
+          <td>
+            <?php
+            echo '<a class="nav-link" href="profile.php?user='.$profiles[$i]->get_id().'">'.$profiles[$i]->get_name()." ".$profiles[$i]->get_surname().'<span class="sr-only">(current)</span></a>';
+            ?>
+          </td>
+        <?php
+      }
+      ?>
+
+    </tbody>
+  </table>
   
 </div>
 </div>

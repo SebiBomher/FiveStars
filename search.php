@@ -39,7 +39,7 @@ $profile = $server->get_profile($idSession);
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
       <?php
       $profile1 = $server->get_profile($idSession);
-        $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
+      $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
       ?>
     <?php endif ?>
   </li>
@@ -78,20 +78,40 @@ $profile = $server->get_profile($idSession);
 
 </div>
 
-<div class="content">
-  <?php
-  $db = mysqli_connect('localhost', 'root', '', 'socialsite');
-  if (isset($_POST['search'])){
-    $query = mysqli_real_escape_string($db, $_POST['query']);
-    $sql = "SELECT * FROM user WHERE name LIKE '%$query%' OR surname LIKE '%$query%'";
-    $result = mysqli_query($db, $sql);
-    while ($row = mysqli_fetch_assoc($result)){
-      $server->show_profilephotoicon($server->get_imageblob($row['profile_photo_id']));
-      echo '<a class="nav-link" href="profile.php?user='.$row['Id'].'">'.$row['Name']." ".$row['Surname'].'<span class="sr-only">(current)</span></a>';
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Photo</th>
+      <th scope="col">Name</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <?php
+    $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+    if (isset($_POST['search'])){
+      $query = mysqli_real_escape_string($db, $_POST['query']);
+      $sql = "SELECT * FROM user WHERE name LIKE '%$query%' OR surname LIKE '%$query%'";
+      $result = mysqli_query($db, $sql);
+      while ($row = mysqli_fetch_assoc($result)){
+        ?>
+        <tr>
+          <td>
+            <?php
+            $server->show_profilephotoicon($server->get_imageblob($row['profile_photo_id']));
+            ?>
+          </td>
+          <td>
+            <?php
+            echo '<a class="nav-link" href="profile.php?user='.$row['Id'].'">'.$row['Name']." ".$row['Surname'].'<span class="sr-only">(current)</span></a>';
+            ?>
+          </td>
+        </tr>
+        <?php
+      }
     }
-  //header('location: search.php');
-  }
-  ?>
-</div>
+    ?>
+  </tbody>
+</table>
 </body>
 </html>
