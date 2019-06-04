@@ -11,7 +11,7 @@ $idSession = $_SESSION['id'];
 $idCurrentProfile = $_GET['user'];
 $profile = new Profile();
 $server = new Functions();
-$profile = $server->get_profile($idSession);
+$profile = $server->get_profile($idCurrentProfile);
 ?>
 
 <!DOCTYPE html>
@@ -89,20 +89,86 @@ $profile = $server->get_profile($idSession);
     <a class="nav-link" href=<?php echo $userFriends;?> >Friends</a>
   </li>
 </ul>
-<div class="container mt-3">
-  <form action="upload.php" method="POST" enctype="multipart/form-data">
-    <div class="input-group">
-      <label>File: </label>
-      <input type="file" name="image" />
-      <div class="input-group">
-        <button type="submit" class="btn" name="upload_photo">Upload Photo</button>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-3">
+      <div class="card" style="width: 14rem;">
+        <?php
+        $server->show_photo(76)
+        ?>
+        <div class="card-body">
+          <h5 class="card-title">Album title</h5>
+          <a href="#" class="btn btn-primary">View</a>
+        </div>
       </div>
     </div>
-  </form>
-  
+    <div class="col-sm-3">
+      <div class="card" style="width: 14rem;">
+        <?php
+        $server->show_photo(76)
+        ?>
+        <div class="card-body">
+          <h5 class="card-title">Album title</h5>
+          <a href="#" class="btn btn-primary">View</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3">
+      <div class="card" style="width: 14rem;">
+        <?php
+        $server->show_photo(76)
+        ?>
+        <div class="card-body">
+          <h5 class="card-title">Album title</h5>
+          <a href="#" class="btn btn-primary">View</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3">
+      <div class="card" style="width: 14rem;">
+        <?php
+        $server->show_photo(76)
+        ?>
+        <div class="card-body">
+          <h5 class="card-title">Album title</h5>
+          <a href="#" class="btn btn-primary">View</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-</div>
+<div class="container">
+  <?php
+    $albums = array();
+    $server->get_albums($idCurrentProfile,$albums);
+      for ($i = 1; $i <= sizeof($albums) ; $i = $i + 1)
+      {
+        if ($i % 4 == 0)
+        {
+          ?>
+          <div class="row">
+          <?php
+        }
+        ?>
+        <div class="col-sm-3">
+          <div class="card" style="width: 14rem;">
+          <?php
 
+          //$server->show_photo($albums[$i]->get)
+          ?>
+          </div>
+        </div>
+        <?php
+        if ($i % 4 == 0)
+        {
+          ?>
+          </div>
+          <?php
+        }
+      }
+  ?>
+</div>
+</div>
 
 </body>
 </html>

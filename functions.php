@@ -1,4 +1,4 @@
-<?php include('profileclass.php') ?>
+<?php include('classes.php') ?>
 <?php
 
 class Functions{
@@ -119,10 +119,10 @@ function friend_request_notification($id)
 }
 function cmp($a, $b)
 {
-    if ($a == $b) {
-        return 0;
-    }
-    return ($a < $b) ? -1 : 1;
+  if (strcmp(strtolower($a->get_name()),strtolower($b->get_name()) == 0)){
+    return strcmp(strtolower($a->get_surname()),strtolower($b->get_surname()));
+  }
+  return strcmp(strtolower($a->get_name()),strtolower($b->get_name()));
 }
 
 function recive_friends($id,&$Parray)
@@ -161,7 +161,43 @@ function recive_friends($id,&$Parray)
     array_push($Parray,$Profile);
   }
   
-  usort($Parray, "cmp");
+  usort($Parray, array("Profile", "cmp"));
+}
+function show_photo($id)
+{
+  $functions = new Functions();
+  echo '<img class ="card-img-top" src="data:image/jpeg;base64,'.base64_encode( $functions->get_imageblob($id) ).'"/>';
+}
+function get_albums($id,&$albumarray)
+{
+  $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+  $sql = "SELECT * FROM album WHERE OwnerID = $id";
+  $result = mysqli_query($db, $sql);
+  while ($row = mysqli_fetch_assoc($result)){
+    $album = new Album();
+    $album->set_id($row['ID']);
+    $album->set_ownerid($row['OwnerID']);
+    $album->set_name($row['Name']);
+    array_push($albumarray,$album);
+  }
+}
+function get_photosfromalbum($id,&$photoarray)
+{
+  $sql = "SELECT * FROM albumtophoto WHERE AlbumId = $id";
+  $sth = mysqli_query($db, $sql);
+  $result = mysqli_fetch_array($sth);
+  while ($row = mysqli_fetch_assoc($result)){
+    $imageID = $row['PhotoId'];
+    $sql1 = "SELECT * FROM photo WHERE Id = $imageID ORDER BY Time";
+    $sth1 = mysqli_query($db, $sql1);
+    $result1 = mysqli_fetch_array($sth1);
+    while ($rows = mysqli_fetch_assoc($result1)){
+      $photo = new Photo();
+      $photo->set_id($row['Id']);
+      $photo->set_name($row['Name']);
+      array_push($photoarray,$photo);
+    }
+  }
 }
 }
 ?>

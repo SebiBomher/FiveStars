@@ -10,7 +10,7 @@ $idSession = $_SESSION['id'];
 $idCurrentProfile = $_GET['user'];
 $profile = new Profile();
 $server = new Functions();
-$profile = $server->get_profile($idSession);
+$profile = $server->get_profile($idCurrentProfile);
 
 ?>
 

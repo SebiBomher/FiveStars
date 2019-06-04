@@ -1,5 +1,43 @@
  <?php
-
+ class Photo{
+ 	var $id;
+ 	var $name;
+ 	function set_id($new_id){
+ 		$this->id = $new_id;
+ 	}
+ 	function set_name($new_name){
+ 		$this->name = $new_name;
+ 	}
+ 	function get_id(){
+ 		return $this->id;
+ 	}
+ 	function get_name(){
+ 		return $this->name;
+ 	}
+ }
+ class Album{
+ 	var $id;
+ 	var $ownerid;
+ 	var $name;
+ 	function set_id($new_id){
+ 		$this->id = $new_id;
+ 	}
+ 	function set_ownerid($new_ownerid){
+ 		$this->ownerid = $new_ownerid;
+ 	}
+ 	function set_name($new_name){
+ 		$this->name = $new_name;
+ 	}
+ 	function get_id(){
+ 		return $this->id;
+ 	}
+ 	function get_ownerid(){
+ 		return $this->ownerid;
+ 	}
+ 	function get_name(){
+ 		return $this->name;
+ 	}
+ }
  class Profile{
  	var $id;
  	var $name;
@@ -64,6 +102,13 @@
  	}
  	function get_phone_number(){
  		return $this->phone_number = $new_phone_number;
+ 	}
+ 	function cmp($a, $b)
+ 	{
+ 		if (strcmp(strtolower($a->get_name()),strtolower($b->get_name()) == 0)){
+ 			return strcmp(strtolower($a->get_surname()),strtolower($b->get_surname()));
+ 		}
+ 		return strcmp(strtolower($a->get_name()),strtolower($b->get_name()));
  	}
  }
 

@@ -10,7 +10,7 @@ $idSession = $_SESSION['id'];
 $idCurrentProfile = $_GET['user'];
 $profile = new Profile();
 $server = new Functions();
-$profile = $server->get_profile($idSession);
+$profile = $server->get_profile($idCurrentProfile);
 
 ?>
 
@@ -100,8 +100,7 @@ $profile = $server->get_profile($idSession);
     <?php
     $profiles = array();
     $functions = new Functions;
-    if (isset($_SESSION['id']))
-      $functions->recive_friends($_SESSION['id'],$profiles);
+      $functions->recive_friends($idCurrentProfile,$profiles);
     ?>
     <tbody>
 

@@ -110,7 +110,7 @@ $profile = $server->get_profile($idCurrentProfile);
 </ul>
 <div class="container mt-3">
   <?php  if (isset($_SESSION['id']) && $_SESSION['id'] == $idCurrentProfile) : ?>
-    <form class="form" action="server.php"method="POST" enctype="multipart/form-data">
+    <form class="form" action="server.php" method="POST" enctype="multipart/form-data">
       <?php include('errors.php'); ?>
       <div class="form-group">
        <label>Status Update:</label>
