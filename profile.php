@@ -6,8 +6,10 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
+$uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
-$idCurrentProfile = $_GET['user'];
+$idCurrentProfile = $uri_segments[3];
 $profile = new Profile();
 $server = new Functions();
 $profile = $server->get_profile($idCurrentProfile);
@@ -25,14 +27,14 @@ $profile = $server->get_profile($idCurrentProfile);
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">Entropy</a>
+    <a class="navbar-brand" href="#">FiveStars</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
      <span class="navbar-toggler-icon"></span>
    </button>
    <div class="collapse navbar-collapse" id="navbarSupportedContent">
      <ul class="navbar-nav mr-auto">
        <li class="nav-item active">
-        <a class="nav-link" href="logout.php">Logout<span class="sr-only">(current)</span></a>
+        <a class="nav-link" href="/fivestars/logout.php">Logout<span class="sr-only">(current)</span></a>
       </li>
     </ul>
     <ul class="navbar-nav ml-auto">
@@ -46,14 +48,14 @@ $profile = $server->get_profile($idCurrentProfile);
     </li>
     <li class="nav-item active">
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-      <?php $userNameSurname = "profile.php?user=".$_SESSION['id']; ?>
+      <?php $userNameSurname = $_SESSION['id']; ?>
       <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
     <?php endif ?>
   </li>
   <li class="nav-item active">
-    <a class="nav-link" href="main.php">Home<span class="sr-only">(current)</span></a>
+    <a class="nav-link" href="/FiveStars/main.php">Home<span class="sr-only">(current)</span></a>
   </li>
-  <form class="form-inline" method="POST" action="search.php">
+  <form class="form-inline" method="POST" action="/FiveStars/search.php">
     <input class="form-control mr-sm-2" type="search" placeholder="Search" name="query" aria-label="Search">
     <button class="btn btn-light my-2 my-sm-0" type="submit" name="search">Search</button>
   </form>
@@ -63,35 +65,14 @@ $profile = $server->get_profile($idCurrentProfile);
 </nav>
 <div class="container mt-3">
   <?php 
-
-
-  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()));
-  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()));
-  ?>
-  <button class="open-button" onclick="openForm()">Open Form</button>
-
-  <div class="d-none form-popup" id="myForm">
-    <form class="form-container" style>
-      <h1>NewProfilePicture</h1>
-      <button type="submit" class="btn cancel" onclick="closeForm()">Close</button>
-    </form>
-  </div> 
-  <script type="text/javascript">
-    function openForm() {
-      document.getElementById("myForm").className = "form-popup";
-    }
-
-    function closeForm() {
-      document.getElementById("myForm").className = "d-none form-popup";
-    } 
-  </script>
-  <?php
+  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()),$idCurrentProfile);
+  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()),$idCurrentProfile);
   $server->show_name($profile->get_name(),$profile->get_surname());
 
-  $userNameSurname = "profile.php?user=".$idCurrentProfile;
-  $userAbout = "about.php?user=".$idCurrentProfile;
-  $userAlbums = "albums.php?user=".$idCurrentProfile;
-  $userFriends = "friends.php?user=".$idCurrentProfile;
+  $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
+  $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
+  $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
+  $userFriends = "/FiveStars/friends.php/".$idCurrentProfile;
   ?>
 </div>
 <ul class="nav nav-tabs justify-content-center">
@@ -110,13 +91,13 @@ $profile = $server->get_profile($idCurrentProfile);
 </ul>
 <div class="container mt-3">
   <?php  if (isset($_SESSION['id']) && $_SESSION['id'] == $idCurrentProfile) : ?>
-    <form class="form" action="server.php" method="POST" enctype="multipart/form-data">
+    <form class="form" action="/FiveStars/server.php" method="POST" enctype="multipart/form-data">
       <?php include('errors.php'); ?>
       <div class="form-group">
        <label>Status Update:</label>
        <textarea class="form-control" rows="3" cols="45" name="description" placeholder="What's on your mind?"></textarea>
      </div>
-
+     <input class="text d-none" type="text" name="AlbumId" value="0" >
      <label class="btn btn-default">
       Photo/video <input class="btn btn-defaulttype" type="file" name="image">
     </label>

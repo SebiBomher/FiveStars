@@ -6,9 +6,10 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
-
+$uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
-$idCurrentProfile = $_GET['user'];
+$idCurrentProfile = $uri_segments[3];
 $profile = new Profile();
 $server = new Functions();
 $profile = $server->get_profile($idCurrentProfile);
@@ -26,14 +27,14 @@ $profile = $server->get_profile($idCurrentProfile);
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">Entropy</a>
+    <a class="navbar-brand" href="#">FiveStars</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
      <span class="navbar-toggler-icon"></span>
    </button>
    <div class="collapse navbar-collapse" id="navbarSupportedContent">
      <ul class="navbar-nav mr-auto">
        <li class="nav-item active">
-        <a class="nav-link" href="logout.php">Logout<span class="sr-only">(current)</span></a>
+        <a class="nav-link" href="/fivestars/logout.php">Logout<span class="sr-only">(current)</span></a>
       </li>
     </ul>
     <ul class="navbar-nav ml-auto">
@@ -47,14 +48,14 @@ $profile = $server->get_profile($idCurrentProfile);
   </li>
   <li class="nav-item active">
     <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-    <?php $userNameSurname = "profile.php?user=".$_SESSION['id']; ?>
+    <?php $userNameSurname = "/FiveStars/profile.php/".$_SESSION['id']; ?>
     <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
   <?php endif ?>
 </li>
 <li class="nav-item active">
-  <a class="nav-link" href="main.php">Home<span class="sr-only">(current)</span></a>
+  <a class="nav-link" href="/FiveStars/main.php">Home<span class="sr-only">(current)</span></a>
 </li>
-<form class="form-inline" method="POST" action="search.php">
+<form class="form-inline" method="POST" action="/FiveStars/search.php">
   <input class="form-control mr-sm-2" type="search" placeholder="Search" name="query" aria-label="Search">
   <button class="btn btn-light my-2 my-sm-0" type="submit" name="search">Search</button>
 </form>
@@ -64,15 +65,16 @@ $profile = $server->get_profile($idCurrentProfile);
 </nav>
 <div class="container mt-3">
   <?php 
-
-  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()));
-  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()));
+  
+  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()),$idCurrentProfile);
+  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()),$idCurrentProfile);
   $server->show_name($profile->get_name(),$profile->get_surname());
 
-  $userNameSurname = "profile.php?user=".$idCurrentProfile;
-  $userAbout = "about.php?user=".$idCurrentProfile;
-  $userAlbums = "albums.php?user=".$idCurrentProfile;
-  $userFriends = "friends.php?user=".$idCurrentProfile;
+  $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
+  $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
+  $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
+  $userFriends = "/FiveStars/friends.php/".$idCurrentProfile;
+  $userAlbumsView = "/FiveStars/albumview.php/".$idCurrentProfile."/";
   ?>
 </div>
 <ul class="nav nav-tabs justify-content-center">
@@ -89,85 +91,69 @@ $profile = $server->get_profile($idCurrentProfile);
     <a class="nav-link" href=<?php echo $userFriends;?> >Friends</a>
   </li>
 </ul>
-<div class="container">
-  <div class="row">
-    <div class="col-sm-3">
-      <div class="card" style="width: 14rem;">
-        <?php
-        $server->show_photo(76)
-        ?>
-        <div class="card-body">
-          <h5 class="card-title">Album title</h5>
-          <a href="#" class="btn btn-primary">View</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-3">
-      <div class="card" style="width: 14rem;">
-        <?php
-        $server->show_photo(76)
-        ?>
-        <div class="card-body">
-          <h5 class="card-title">Album title</h5>
-          <a href="#" class="btn btn-primary">View</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-3">
-      <div class="card" style="width: 14rem;">
-        <?php
-        $server->show_photo(76)
-        ?>
-        <div class="card-body">
-          <h5 class="card-title">Album title</h5>
-          <a href="#" class="btn btn-primary">View</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-3">
-      <div class="card" style="width: 14rem;">
-        <?php
-        $server->show_photo(76)
-        ?>
-        <div class="card-body">
-          <h5 class="card-title">Album title</h5>
-          <a href="#" class="btn btn-primary">View</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="container">
-  <?php
-    $albums = array();
-    $server->get_albums($idCurrentProfile,$albums);
-      for ($i = 1; $i <= sizeof($albums) ; $i = $i + 1)
-      {
-        if ($i % 4 == 0)
-        {
-          ?>
-          <div class="row">
-          <?php
-        }
-        ?>
-        <div class="col-sm-3">
-          <div class="card" style="width: 14rem;">
-          <?php
 
-          //$server->show_photo($albums[$i]->get)
+<?php
+$albums = array();
+$server->get_albums($idCurrentProfile,$albums);
+for ($i = 1; $i <= sizeof($albums) ; $i = $i + 1) :
+  if (($i - 1) % 4 == 0) : ?>
+    <div class="container">
+      <div class="row">
+      <?php endif ?>
+      <div class="col-sm-3">
+        <div class="card" style="width: 14rem;">
+          <?php
+          $server->show_photo(77);
           ?>
+          <div class="card-body">
+            <h5 class="card-title"><?php echo $albums[$i - 1]->get_name();?></h5>
+            <a href=<?php echo $userAlbumsView.$albums[$i - 1]->get_id();?> class="btn btn-primary">View</a>
           </div>
         </div>
-        <?php
-        if ($i % 4 == 0)
-        {
-          ?>
+      </div>
+      <?php if (($i - 1) % 4 == 4) : ?>
+      </div>
+    </div>
+  <?php endif ?> 
+<?php endfor ?> 
+
+<?php  if (isset($_SESSION['id']) && $_SESSION['id'] == $idCurrentProfile) : ?>
+  <div class="container">
+    <!-- Trigger the modal with a button -->
+    <button type="button" class="btn btn-info btn-lg mt-3 ml-5" data-toggle="modal" data-target="#myModal">New Album</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
-          <?php
-        }
-      }
-  ?>
-</div>
+          <div class="modal-body">
+            <form class="form" action="server.php "method="POST">
+              <div class="row">
+                <div class="col">
+                  <input class="form-control" type="text" name="name" >
+                </div>
+                <input class="text d-none" type="text" name="id" value=<?php echo $idCurrentProfile;?> >
+                <div class="col">
+                  <button type="submit" class="btn btn-default" name="new_album">Add Album</button>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+<?php endif ?>
 </div>
 
 </body>

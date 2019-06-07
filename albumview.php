@@ -10,10 +10,10 @@ $uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
 $idCurrentProfile = $uri_segments[3];
+$idAlbum = $uri_segments[4];
 $profile = new Profile();
 $server = new Functions();
 $profile = $server->get_profile($idCurrentProfile);
-
 ?>
 
 <!DOCTYPE html>
@@ -72,6 +72,7 @@ $profile = $server->get_profile($idCurrentProfile);
   $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()),$idCurrentProfile);
   $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()),$idCurrentProfile);
   $server->show_name($profile->get_name(),$profile->get_surname());
+
   $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
   $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
   $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
@@ -83,55 +84,43 @@ $profile = $server->get_profile($idCurrentProfile);
     <a class="nav-link" href=<?php echo $userNameSurname;?> >Timeline</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href=<?php echo $userAlbums;?> >Albums</a>
+    <a class="nav-link active" href=<?php echo $userAlbums;?> >Albums</a>
   </li>
   <li class="nav-item">
     <a class="nav-link" href=<?php echo $userAbout;?> >About</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link active" href=<?php echo $userFriends;?> >Friends</a>
+    <a class="nav-link" href=<?php echo $userFriends;?> >Friends</a>
   </li>
 </ul>
-<div class="container mt-3">
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Photo</th>
-        <th scope="col">Name</th>
-      </tr>
-    </thead>
-    <?php
-    $profiles = array();
-    $functions = new Functions;
-      $functions->recive_friends($idCurrentProfile,$profiles);
-    ?>
-    <tbody>
 
-      <?php
-      for ($i = 0; $i < sizeof($profiles); $i = $i + 1)
-      {
-        ?>
-        <tr>
-          <td>
-            <?php
-            $server->show_profilephotoicon($server->get_imageblob($profiles[$i]->get_profile_photo_id()));
-            ?>
-          </td>
-          <td>
-            <?php
-            echo '<a class="nav-link" href="/fivestars/profile.php/'.$profiles[$i]->get_id().'">'.$profiles[$i]->get_name()." ".$profiles[$i]->get_surname().'<span class="sr-only">(current)</span></a>';
-            ?>
-          </td>
+<?php
+$photos = array();
+$server->get_photosfromalbum($idAlbum,$photos);
+for ($i = 1; $i <= sizeof($photos) ; $i = $i + 1) :
+  if (($i - 1) % 4 == 0) : ?>
+    <div class="container">
+      <div class="row">
+      <?php endif ?>
+      <div class="col-sm-3">
         <?php
-      }
-      ?>
+        $server->show_photowithclick($photos[$i - 1]->get_id(),$i - 1);
+        ?>
+      </div>
+      <?php if (($i - 1) % 4 == 4) : ?>
+      </div>
+    </div>
+  <?php endif ?> 
+<?php endfor ?> 
 
-    </tbody>
-  </table>
-  
-</div>
-</div>
+<?php  if (isset($_SESSION['id']) && $_SESSION['id'] == $idCurrentProfile) : ?>
+  <?php 
+  $functions = new Functions();
+  $functions->show_uploadphotoinmodal("myModal",$idAlbum,0, "Add Photo");?>
 
+</div>
+<?php endif ?>
+</div>
 
 </body>
 </html>

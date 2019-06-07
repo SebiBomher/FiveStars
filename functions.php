@@ -40,17 +40,33 @@ class Functions{
   }
 
 
-  function show_coverphoto($blob)
+  function show_coverphoto($blob,$idCurrent)
   {
+   $functions = new Functions();
    echo '<div class="container mt-3 text-center">';
    echo '<img src="data:image/jpeg;base64,'.base64_encode( $blob ).'"class="center-block border border-dark rounded" width="851" height="315"/>';
+   if ($idCurrent == $_SESSION['id']) {
+    $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+    $sql = "SELECT * FROM album WHERE OwnerID = $idCurrent AND Name = 'Profile'";
+    $sth = mysqli_query($db, $sql);
+    $row = mysqli_fetch_assoc($sth);
+    $functions->show_uploadphotoinmodal("myModalCover",$row['ID'],2, "Change Cover Photo");
+  }
    echo '</div>';
  }
 
- function show_profilephoto($blob)
+ function show_profilephoto($blob,$idCurrent)
  {
+  $functions = new Functions();
    echo '<div class="container mt-3 text-center">';
-   echo '<img src="data:image/jpeg;base64,'.base64_encode( $blob ).'"class="rounded-circle border-dark rounded" width="180" height="180"/>';
+   echo '<img  class="rounded-circle border-dark rounded" data-toggle="modal" data-target="#myModalProfile" src="data:image/jpeg;base64,'.base64_encode( $blob ).'" width="180" height="180"/>';
+   if ($idCurrent == $_SESSION['id']) {
+    $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+    $sql = "SELECT * FROM album WHERE OwnerID = $idCurrent AND Name = 'Profile'";
+    $sth = mysqli_query($db, $sql);
+    $row = mysqli_fetch_assoc($sth);
+    $functions->show_uploadphotoinmodal("myModalProfile",$row['ID'],1,"Change Profile Photo");
+  }
    echo '</div>';
  }
  function show_profilephotoicon($blob)
@@ -163,10 +179,91 @@ function recive_friends($id,&$Parray)
   
   usort($Parray, array("Profile", "cmp"));
 }
-function show_photo($id)
+function show_photofull($id)
 {
   $functions = new Functions();
   echo '<img class ="card-img-top" src="data:image/jpeg;base64,'.base64_encode( $functions->get_imageblob($id) ).'"/>';
+}
+function show_photo($id)
+{
+  $functions = new Functions();
+  echo '<img class ="card-img-top" src="data:image/jpeg;base64,'.base64_encode( $functions->get_imageblob($id) ).'" width="160" height="160"/>';
+}
+function show_photosimple($id)
+{
+  $functions = new Functions();
+  echo '<img class="d-inline" src="data:image/jpeg;base64,'.base64_encode( $functions->get_imageblob($id) ).'" width="200" height="200"/>';
+}
+function show_photowithclick($id,$i)
+{
+  $functions = new Functions();
+  $myModal = "#myModal".$i;
+  echo '<img class ="card-img-top" data-toggle="modal" data-target='.$myModal.' src="data:image/jpeg;base64,'.base64_encode( $functions->get_imageblob($id) ).'" width="160" height="160" />';
+  $functions->show_photoinmodal($id,$i);
+}
+function show_photoinmodal($id,$i)
+{
+  $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+  $sql = "SELECT * FROM article WHERE Photo_Id = $id";
+  $result = mysqli_query($db, $sql);
+  $row = mysqli_fetch_assoc($result);
+  $description = $row['Description'];
+  $owner = $row['Author_Id'];
+  $sql = "SELECT * FROM user WHERE Id = $owner";
+  $result = mysqli_query($db, $sql);
+  $row = mysqli_fetch_assoc($result);
+  $fullname = $row['Name']." ".$row['Surname'];
+  $functions = new Functions();
+  $myModal = "myModal".$i;
+  echo '<div class="modal fade" id='.$myModal.' role="dialog">';
+  echo '<div class="modal-dialog">';
+  echo '<div class="modal-content">';
+  echo '<div class="modal-header">';
+  echo '<h2 class="text-center">'.$fullname.'</h2>';
+  echo '<button type="button" class="close" data-dismiss="modal">&times;</button>';
+  echo '</div>';
+  echo '<div class="modal-body">';
+  $functions->show_photofull($id);
+  echo '<p class="text-center">'.$description.'</p>';
+  echo '</div>';
+  echo '<div class="modal-footer">';
+  echo '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>';
+  echo '</div>';
+  echo '</div>';
+  echo '</div>';
+  echo '</div>';
+
+}
+function show_uploadphotoinmodal($modalname,$albumname,$profilepic,$tosay)
+{
+  echo '<div class="container">';
+  echo '<button type="button" class="btn btn-primary-outline mt-3 mb-3" data-toggle="modal" data-target=#'.$modalname.'>'.$tosay.'</button>';
+  echo '<div class="modal fade" id='.$modalname.' role="dialog">';
+  echo '<div class="modal-dialog">';
+  echo '<div class="modal-content">';
+  echo '<div class="modal-header">';
+  echo '<button type="button" class="close" data-dismiss="modal">&times;</button>';
+  echo '</div>';
+  echo '<div class="modal-body">';
+  echo '<form class="form" action="/FiveStars/server.php" method="POST" enctype="multipart/form-data">';
+  echo '<div class="form-group">';
+  echo '<label>Description:</label>';
+  echo '<textarea class="form-control" rows="3" cols="45" name="description" placeholder="Description"></textarea>';
+  echo '</div>';
+  echo '<input class="text d-none" type="text" name="AlbumId" value='.$albumname.'>';
+  echo '<input class="text d-none" type="text" name="NewProfilePicture" value='.$profilepic.'>';
+  echo '<label class="btn btn-default"> Photo/video <input class="btn btn-defaulttype" type="file" name="image">';
+  echo '</label>';
+  echo '</div>';
+  echo '<div class="modal-footer">';
+  echo '<button type="submit" class="btn btn-default" name="upload_article">Upload photo</button>';
+  echo '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>';
+  echo '</form>';
+  echo '</div>';
+  echo '</div>';
+  echo '</div>';
+  echo '</div>';
+  echo '</div>';
 }
 function get_albums($id,&$albumarray)
 {
@@ -183,19 +280,48 @@ function get_albums($id,&$albumarray)
 }
 function get_photosfromalbum($id,&$photoarray)
 {
+  $db = mysqli_connect('localhost', 'root', '', 'socialsite');
   $sql = "SELECT * FROM albumtophoto WHERE AlbumId = $id";
-  $sth = mysqli_query($db, $sql);
-  $result = mysqli_fetch_array($sth);
+  $result = mysqli_query($db, $sql);
   while ($row = mysqli_fetch_assoc($result)){
     $imageID = $row['PhotoId'];
-    $sql1 = "SELECT * FROM photo WHERE Id = $imageID ORDER BY Time";
-    $sth1 = mysqli_query($db, $sql1);
-    $result1 = mysqli_fetch_array($sth1);
+    $sql1 = "SELECT * FROM photo WHERE Id = $imageID ORDER BY Time ASC";
+    $result1 = mysqli_query($db, $sql1);
     while ($rows = mysqli_fetch_assoc($result1)){
       $photo = new Photo();
-      $photo->set_id($row['Id']);
-      $photo->set_name($row['Name']);
+      $photo->set_id($imageID);
+      $photo->set_name($rows['image_name']);
       array_push($photoarray,$photo);
+    }
+  }
+}
+function show_newsfeedarticle($id)
+{
+
+}
+function show_newsfeed($id)
+{
+  $functions = new Functions();
+  $db = mysqli_connect('localhost', 'root', '', 'socialsite');
+  $sql = "SELECT * FROM friendship WHERE User1 = $id OR User2 = $id";
+  $result = mysqli_query($db, $sql);
+  while ($row = mysqli_fetch_assoc($result)){
+    $friendsID1 = $row['User1'];
+    $friendsID2 = $row['User2'];
+    if ($friendsID2 == $id) $friendsID = $friendsID1;
+    else if ($friendsID1 == $id) $friendsID = $friendsID2;
+    $sql1 = "SELECT * FROM article WHERE Author_Id = $friendsID ORDER BY Time DESC";
+    $result1 = mysqli_query($db, $sql1);
+    $i = 0;
+    while ($row1 = mysqli_fetch_assoc($result1)){
+      echo '<div class="container">';
+      echo '<div class="row">';
+      echo '<div class="col-md-3 mt-3 mb-3">';
+      if ($row1['Photo_Id'] != null ) $functions->show_photowithclick($row1['Photo_Id'],$i);
+      echo '</div>';
+      echo '</div>';
+      echo '</div>';
+      $i = $i + 1;
     }
   }
 }

@@ -53,8 +53,19 @@ if (isset($_POST['reg_user'])) {
   	if (empty($phone)) $phone = NULL;
   	$query = "INSERT INTO user (Name, Surname, Email, Password, Score, Rating, profile_photo_id, cover_photo_id) 
   	VALUES('$name','$surname', '$email', '$password', 0, 2.5, 4, 75)";
-  	
   	mysqli_query($db, $query);
+
+  	$query = "INSERT INTO album (OwnerID, Name) 
+  	VALUES('$id','Timeline'),('$id','Profile')";
+  	mysqli_query($db, $query);
+
+  	$query = "SELECT * from album WHERE OwnerID = '$id' AND Name = 'Profile'";
+  	$result = mysqli_query($db, $query);
+  	$row = mysqli_fetch_assoc($result);
+  	$query = "INSERT INTO albumtophoto (albumId, Photo_id) 
+  	VALUES('$row[0]',4),('$row[0]',75)";
+  	mysqli_query($db, $query);
+
   	$_SESSION['id'] = $id;
   	$_SESSION['name'] = $name;
   	$_SESSION['surname'] = $surname;
@@ -106,7 +117,9 @@ if (isset($_POST['upload_article'])){
 	$server = new Functions();
 
 	$profile = $server->get_profile($_SESSION['email']);
-	$user_id = $profile->get_id();
+	$user_id = $_SESSION['id'];
+	$Albumid = mysqli_real_escape_string($db, $_POST['AlbumId']);
+	$isNewProfilePic = mysqli_real_escape_string($db, $_POST['NewProfilePicture']);
 
 	$description = mysqli_real_escape_string($db, $_POST['description']);
 	if(file_exists($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name'])){
@@ -114,28 +127,51 @@ if (isset($_POST['upload_article'])){
 		$image_name = '_'.time().'.'.addslashes($_FILES['image']['name']);
 
 		$query = "INSERT INTO photo (Image, image_name) VALUES ('$image','$image_name')";
-		//$stmt = $pdo->prepare($query);
 		mysqli_query($db, $query);
 
 		$query = "SELECT Id FROM photo WHERE image_name = '$image_name'";
-		//$stmt = $pdo->prepare($query);
 		$results = mysqli_query($db, $query);
 		$row = mysqli_fetch_row($results);
+
+		if ($Albumid == 0)
+		{
+			$name = "Timeline";
+			echo $name." ".$user_id;
+			$querytemp = "SELECT * FROM album WHERE OwnerID = '$user_id' AND Name = '$name'";
+			$results = mysqli_query($db, $querytemp);
+			$rows = mysqli_fetch_row($results);
+			$Albumid = $rows['ID'];
+			echo $Albumid;
+		}
+		$query = "INSERT INTO albumtophoto (PhotoId, AlbumId) VALUES ('$row[0]','$Albumid')";
+		mysqli_query($db, $query);
+
+		if ($isNewProfilePic == 1)
+		{
+			$sql = "UPDATE user SET profile_photo_id = '$row[0]' WHERE Id = '$user_id'";
+			mysqli_query($db, $sql);
+		}
+		if ($isNewProfilePic == 2)
+		{
+			$sql = "UPDATE user SET cover_photo_id = '$row[0]' WHERE Id = '$user_id'";
+			mysqli_query($db, $sql);
+		}
+
 		if (!empty($description)){
+			echo "Poza cu descriere";
 			$query = "INSERT INTO article (Author_Id, Photo_Id, Description) VALUES ('$user_id','$row[0]','$description')";
-			//$stmt = $pdo->prepare($query);
 			mysqli_query($db, $query);
 		}
 		else{
 			$query = "INSERT INTO article (Author_Id, Photo_Id) VALUES ('$user_id','$row[0]')";
-			//$stmt = $pdo->prepare($query);
+			echo "Poza fara descriere";
 			mysqli_query($db, $query);
 		}
 	}
 	else if (!(file_exists($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name']))){
 		if (!empty($description)){
+			echo "doar descriere";
 			$query = "INSERT INTO article (Author_Id, Description) VALUES ('$user_id','$description')";
-			//$stmt = $pdo->prepare($query);
 			mysqli_query($db, $query);
 		}
 		else if (empty($description)){
@@ -143,9 +179,14 @@ if (isset($_POST['upload_article'])){
 			echo '<script>alert("Your status update is empty!");</script>';
 		}
 	}
+	else if (!(file_exists($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name'])) && $Albumid !== 0){
+		echo '<script>alert("Please choose a photo!");</script>';
+	}
 	
-	header('location: profile.php?user='.$_SESSION['id']);
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
 }
+
+
 
 if (isset($_POST['view_photo'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
@@ -170,19 +211,27 @@ if (isset($_POST['send_friend_request'])){
 		$sql = "INSERT INTO notifications (Profile_id, Type, Notification_Id) VALUES ('$id','friendship', '$notification_Id')";
 		mysqli_query($db, $sql);
 	}
-	header('location: profile.php?user='.$id);
+	header('location: /FiveStars/profile.php/'.$id);
 }
 if (isset($_POST['accept_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
 	$sql = "UPDATE friendship SET Status = 'accepted' WHERE User1 = $id and User2 = ".$_SESSION['id'];
 	mysqli_query($db, $sql);
-	header('location: profile.php?user='.$_SESSION['id']);
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
 }
 
 if (isset($_POST['reject_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
 	$sql = "UPDATE friendship SET Status = 'declined' WHERE User1 = $id and User2 = ".$_SESSION['id'];
 	mysqli_query($db, $sql);
-	header('location: profile.php?user='.$_SESSION['id']);
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
+}
+
+if (isset($_POST['new_album'])){
+	$name = mysqli_real_escape_string($db, $_POST['name']);
+	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$sql = "INSERT INTO album (OwnerID, Name) VALUES ('$id','$name')";
+	mysqli_query($db, $sql);
+	header('location: /FiveStars/albums.php/'.$_SESSION['id']);
 }
 ?>

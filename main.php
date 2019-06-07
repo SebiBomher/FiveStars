@@ -6,6 +6,7 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
+
 $idSession = $_SESSION['id'];
 $profile = new Profile();
 $server = new Functions();
@@ -25,7 +26,7 @@ $profile = $server->get_profile($idSession);
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">Entropy</a>
+    <a class="navbar-brand" href="#">FiveStars</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
      <span class="navbar-toggler-icon"></span>
    </button>
@@ -46,7 +47,7 @@ $profile = $server->get_profile($idSession);
     </li>
     <li class="nav-item active">
       <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-      <?php $userNameSurname = "profile.php?user=".$_SESSION['id']; ?>
+      <?php $userNameSurname = "profile.php/".$_SESSION['id']; ?>
       <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
     <?php endif ?>
   </li>
@@ -62,20 +63,11 @@ $profile = $server->get_profile($idSession);
 </div>
 </nav>
 <div class="content">
- <!-- Mesaj de notificare -->
- <?php if (isset($_SESSION['success'])) : ?>
-  <div class="error success" >
-   <h3>
-    <?php 
-    echo $_SESSION['success']; 
-    unset($_SESSION['success']);
-    ?>
-  </h3>
-</div>
-<?php endif ?>
-
-<!-- Informatii despre userul logat -->
-
+ 
+<?php
+$functions = new Functions();
+$functions->show_newsfeed($idSession);
+?>
 
 </div>
 </body>
