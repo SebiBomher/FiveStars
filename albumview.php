@@ -12,8 +12,8 @@ $idSession = $_SESSION['id'];
 $idCurrentProfile = $uri_segments[3];
 $idAlbum = $uri_segments[4];
 $profile = new Profile();
-$server = new Functions();
-$profile = $server->get_profile($idCurrentProfile);
+$functions = new Functions();
+$profile = $functions->get_profile($idCurrentProfile);
 ?>
 
 <!DOCTYPE html>
@@ -26,53 +26,23 @@ $profile = $server->get_profile($idCurrentProfile);
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">FiveStars</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-     <span class="navbar-toggler-icon"></span>
-   </button>
-   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-     <ul class="navbar-nav mr-auto">
-       <li class="nav-item active">
-        <a class="nav-link" href="/fivestars/logout.php">Logout<span class="sr-only">(current)</span></a>
-      </li>
-    </ul>
-    <ul class="navbar-nav ml-auto">
-     <li class="nav-item active">
-      <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-      <?php
-      $profile1 = $server->get_profile($idSession);
-      $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
-      ?>
-    <?php endif ?>
-  </li>
-  <li class="nav-item active">
-    <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-    <?php $userNameSurname = "/FiveStars/profile.php/".$_SESSION['id']; ?>
-    <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
-  <?php endif ?>
-</li>
-<li class="nav-item active">
-  <a class="nav-link" href="/FiveStars/main.php">Home<span class="sr-only">(current)</span></a>
-</li>
-<form class="form-inline" method="POST" action="/FiveStars/search.php">
-  <input class="form-control mr-sm-2" type="search" placeholder="Search" name="query" aria-label="Search">
-  <button class="btn btn-light my-2 my-sm-0" type="submit" name="search">Search</button>
-</form>
-</ul>
-
-</div>
-</nav>
-<div class="container mt-3">
+<?php
+$functions->show_navigationbar($idSession);
+$functions->show_chat($idSession);
+?>
+<div class="container mt-3 float-left w-75">
   <?php 
 
   if ($_SESSION['id'] == $idCurrentProfile) $myProfile = true;
   else $myProfile = false;
-  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()),$idCurrentProfile);
-  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()),$idCurrentProfile);
-  $server->show_name($profile->get_name(),$profile->get_surname());
-
+  $functions->show_coverphoto($profile->get_cover_photo_id(),$idCurrentProfile);
+  $functions->show_profilephoto($profile->get_profile_photo_id(),$idCurrentProfile);
+  $functions->show_name($profile->get_name(),$profile->get_surname());
+  $functions->display_stars($profile->get_rating());
+  ?>
+  <h2><?php if ($profile->get_rating() == 0) echo 'No rating'; else echo $profile->get_rating();?></h2>
+  <?php
+  if ($idCurrentProfile !== $idSession) $functions->show_rate($idCurrentProfile,'profile');
   $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
   $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
   $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
@@ -93,10 +63,21 @@ $profile = $server->get_profile($idCurrentProfile);
     <a class="nav-link" href=<?php echo $userFriends;?> >Friends</a>
   </li>
 </ul>
-
 <?php
+$backtoalbum = "/FiveStars/albums.php/".$idCurrentProfile;
+$albumdetail = array();
+$functions->get_album($idAlbum,$albumdetail);
+?>
+<a class="btn btn-danger mt-3 ml-3 mb-3" href=<?php echo $backtoalbum;?> >Back To Albums</a>
+<h2 class="ml-3"><?php echo $albumdetail[0];?></h2>
+<?php
+$functions->display_stars($albumdetail[1]);
+?>
+<h5 class="ml-5"><?php echo $albumdetail[1];?></h5>
+<?php
+if ($idSession !== $idCurrentProfile) $functions->show_rate($idAlbum,'album');
 $photos = array();
-$server->get_photosfromalbum($idAlbum,$photos);
+$functions->get_photosfromalbum($idAlbum,$photos);
 for ($i = 1; $i <= sizeof($photos) ; $i = $i + 1) :
   if (($i - 1) % 4 == 0) : ?>
     <div class="container">
@@ -104,7 +85,7 @@ for ($i = 1; $i <= sizeof($photos) ; $i = $i + 1) :
       <?php endif ?>
       <div class="col-sm-3">
         <?php
-        $server->show_photowithclick($photos[$i - 1]->get_id(),$i - 1);
+        $functions->show_photowithclick($photos[$i - 1]->get_id(),$i - 1);
         ?>
       </div>
       <?php if (($i - 1) % 4 == 4) : ?>
@@ -120,6 +101,7 @@ for ($i = 1; $i <= sizeof($photos) ; $i = $i + 1) :
 
 </div>
 <?php endif ?>
+
 </div>
 
 </body>

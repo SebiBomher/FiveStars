@@ -51,8 +51,8 @@ if (isset($_POST['reg_user'])) {
   	$password = md5($password_1);//criptam parola inainte de adaugare
 
   	if (empty($phone)) $phone = NULL;
-  	$query = "INSERT INTO user (Name, Surname, Email, Password, Score, Rating, profile_photo_id, cover_photo_id) 
-  	VALUES('$name','$surname', '$email', '$password', 0, 2.5, 4, 75)";
+  	$query = "INSERT INTO user (Name, Surname, Email, Password, Score, Rating, profile_photo_id, cover_photo_id, Phone) 
+  	VALUES('$name','$surname', '$email', '$password', 0, 2.5, 4, 75, '$phone')";
   	mysqli_query($db, $query);
 
   	$query = "INSERT INTO album (OwnerID, Name) 
@@ -229,9 +229,182 @@ if (isset($_POST['reject_friend_request'])){
 
 if (isset($_POST['new_album'])){
 	$name = mysqli_real_escape_string($db, $_POST['name']);
-	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$id = mysqli_real_escape_string($db, $_POST['comment']);
 	$sql = "INSERT INTO album (OwnerID, Name) VALUES ('$id','$name')";
 	mysqli_query($db, $sql);
 	header('location: /FiveStars/albums.php/'.$_SESSION['id']);
+}
+if (isset($_POST['send_comment'])){
+	date_default_timezone_set('Europe/Bucharest');
+	$id = mysqli_real_escape_string($db, $_POST['photo_id']);
+	$comment = mysqli_real_escape_string($db, $_POST['comment']);
+	$timeOfInsert = date("Y-m-d H:i:s");
+	$sql = "INSERT INTO comments (Author_Id, Article_Id, Comment, Rating, Time) VALUES ('$_SESSION[id]','$id','$comment',0, '$timeOfInsert')";
+
+	if (!empty($comment)) 
+	{
+		mysqli_query($db, $sql);
+		$sql = "SELECT * FROM comments WHERE Author_Id = '$_SESSION[id]' AND Article_Id = '$id' AND Comment = '$comment' AND Time = '$timeOfInsert'";
+		$result = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($result);
+		$idcomm = $row['Id'];
+		$sql = "SELECT * FROM article WHERE Id = '$id'";
+		$result = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($result);
+		$idtonotify = $row['Author_Id'];
+		$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$idcomm','comment')";
+		mysqli_query($db, $sql);
+	}
+	header('location: /FiveStars/main.php/');
+}
+if (isset($_POST['edit_about'])){
+	$city = mysqli_real_escape_string($db, $_POST['City']);
+	$education = mysqli_real_escape_string($db, $_POST['Education']);
+	$birthday = mysqli_real_escape_string($db, $_POST['Birthday']);
+	$description = mysqli_real_escape_string($db, $_POST['Description']);
+	$interests = mysqli_real_escape_string($db, $_POST['Interests']);
+	$phone = mysqli_real_escape_string($db, $_POST['Phone']);
+	$sql = "UPDATE user SET City = '$city', Education = '$education', Birthday = '$birthday', Description = '$description', Interests = '$interests', Phone = '$phone' WHERE Id = $_SESSION[id]";
+	mysqli_query($db, $sql);
+	header('location: /FiveStars/about.php/'.$_SESSION['id']);
+}
+if (isset($_POST['change_password'])){
+	$oldpass = mysqli_real_escape_string($db, $_POST['oldpassword']);
+	$newpass = mysqli_real_escape_string($db, $_POST['newpassword']);
+	$newpassconfirm = mysqli_real_escape_string($db, $_POST['newpasswordconfirm']);
+	$password = md5($oldpass);
+	$sql = "SELECT * FROM user WHERE Id = '$_SESSION[id]' AND Password = '$password'";
+	$results = mysqli_query($db, $sql);
+	if (mysqli_num_rows($results) == 1 && strcmp($newpass,$newpassconfirm) == 0)
+	{
+		$newpassword = md5($newpass);
+		$sql = "UPDATE user SET Password = '$newpassword' WHERE Id = '$_SESSION[id]' AND Password = '$password'";
+		mysqli_query($db, $sql);
+	}
+	header('location: /FiveStars/about.php/'.$_SESSION['id']);
+}
+if (isset($_POST['send_rate'])){
+	$id = mysqli_real_escape_string($db, $_POST['content_id']);
+	$type = mysqli_real_escape_string($db, $_POST['content_type']);
+	$note = mysqli_real_escape_string($db, $_POST['note']);
+	$giver = $_SESSION['id'];
+	$sql = "SELECT * FROM notes WHERE Note_Giver = $_SESSION[id] AND To_Id = '$id'";
+	$resultsALL = mysqli_query($db, $sql);
+	if (!mysqli_num_rows($resultsALL) == 1) $sql = "INSERT INTO notes (Note_Giver, Type, To_Id, Note) VALUES ('$giver','$type','$id','$note')";
+	else $sql = "UPDATE notes SET Note = '$note' WHERE Note_Giver = '$giver' AND Type = '$type' AND To_Id = '$id'";
+	mysqli_query($db, $sql);
+	if (strcmp($type,'comment') == 0){
+		$sql = "SELECT * FROM comments WHERE Id = $id";
+		$results = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($results);
+		$idtonotify = $row['Author_id'];
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$oldrating = $row['rating'];
+			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1); 
+			$total_note = $row['total_notes'] + 1;
+		}
+		else {
+			$sqlcalc = "SELECT * FROM notes WHERE Note_Giver <> '$giver' AND Type = '$type' AND To_Id = '$id'";
+			$resultscalc = mysqli_query($db, $sqlcalc);
+			$newrating = 0;
+			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
+				$newrating = $newrating + $rowcalc['Note'];
+			}
+			$newrating = $newrating + $note;
+			$total_note = $row['total_notes'];
+		}
+		$sql = "UPDATE comments SET Rating = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
+		mysqli_query($db, $sql);
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			mysqli_query($db, $sql);
+		}
+		header('location: /FiveStars/main.php/');
+	}
+	else if (strcmp($type,'article') == 0){
+		$sql = "SELECT * FROM article WHERE Id = $id";
+		$results = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($results);
+		$idtonotify = $row['Author_Id'];
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$oldrating = $row['rating'];
+			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1); 
+			$total_note = $row['total_notes'] + 1;
+		}
+		else {
+			$sqlcalc = "SELECT * FROM notes WHERE Note_Giver <> '$giver' AND Type = '$type' AND To_Id = '$id'";
+			$resultscalc = mysqli_query($db, $sqlcalc);
+			$newrating = 0;
+			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
+				$newrating = $newrating + $rowcalc['Note'];
+			}
+			$newrating = $newrating + $note;
+			$total_note = $row['total_notes'];
+		}
+		$sql = "UPDATE article SET Note = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
+		mysqli_query($db, $sql);
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			mysqli_query($db, $sql);
+		}
+		header('location: /FiveStars/main.php/');
+	}
+	else if (strcmp($type,'profile') == 0){
+		$sql = "SELECT * FROM user WHERE Id = $id";
+		$results = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($results);
+		$idtonotify = $row['Id'];
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$oldrating = $row['rating'];
+			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1); 
+			$total_note = $row['total_notes'] + 1;
+		}
+		else {
+			$sqlcalc = "SELECT * FROM notes WHERE Note_Giver <> '$giver' AND Type = '$type' AND To_Id = '$id'";
+			$resultscalc = mysqli_query($db, $sqlcalc);
+			$newrating = 0;
+			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
+				$newrating = $newrating + $rowcalc['Note'];
+			}
+			$newrating = $newrating + $note;
+			$total_note = $row['total_notes'];
+		}
+		$sql = "UPDATE user SET Rating = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
+		mysqli_query($db, $sql);
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			mysqli_query($db, $sql);
+		}
+		header('location: /FiveStars/profile.php/'.$id);
+	}
+	else if (strcmp($type,'album') == 0){
+		$sql = "SELECT * FROM album WHERE ID = $id";
+		$results = mysqli_query($db, $sql);
+		$row = mysqli_fetch_assoc($results);
+		$idtonotify = $row['OwnerID'];
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$oldrating = $row['rating'];
+			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1); 
+			$total_note = $row['total_notes'] + 1;
+		}
+		else {
+			$sqlcalc = "SELECT * FROM notes WHERE Note_Giver <> '$giver' AND Type = '$type' AND To_Id = '$id'";
+			$resultscalc = mysqli_query($db, $sqlcalc);
+			$newrating = 0;
+			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
+				$newrating = $newrating + $rowcalc['Note'];
+			}
+			$newrating = $newrating + $note;
+			$total_note = $row['total_notes'];
+		}
+		$sql = "UPDATE album SET Note = '$newrating', total_notes = '$total_note' WHERE ID = '$id'";
+		mysqli_query($db, $sql);
+		if (!mysqli_num_rows($resultsALL) == 1) {
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			mysqli_query($db, $sql);
+		}
+		header('location: /FiveStars/albumview.php/'.$idtonotify.'/'.$id);
+	}
+	
 }
 ?>

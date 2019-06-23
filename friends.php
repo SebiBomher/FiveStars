@@ -11,8 +11,8 @@ $uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
 $idCurrentProfile = $uri_segments[3];
 $profile = new Profile();
-$server = new Functions();
-$profile = $server->get_profile($idCurrentProfile);
+$functions = new Functions();
+$profile = $functions->get_profile($idCurrentProfile);
 
 ?>
 
@@ -27,110 +27,87 @@ $profile = $server->get_profile($idCurrentProfile);
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">FiveStars</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-     <span class="navbar-toggler-icon"></span>
-   </button>
-   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-     <ul class="navbar-nav mr-auto">
-       <li class="nav-item active">
-        <a class="nav-link" href="/fivestars/logout.php">Logout<span class="sr-only">(current)</span></a>
-      </li>
-    </ul>
-    <ul class="navbar-nav ml-auto">
-     <li class="nav-item active">
-      <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-      <?php
-      $profile1 = $server->get_profile($idSession);
-      $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
-      ?>
-    <?php endif ?>
-  </li>
-  <li class="nav-item active">
-    <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-    <?php $userNameSurname = "/FiveStars/profile.php/".$_SESSION['id']; ?>
-    <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
-  <?php endif ?>
-</li>
-<li class="nav-item active">
-  <a class="nav-link" href="/FiveStars/main.php">Home<span class="sr-only">(current)</span></a>
-</li>
-<form class="form-inline" method="POST" action="/FiveStars/search.php">
-  <input class="form-control mr-sm-2" type="search" placeholder="Search" name="query" aria-label="Search">
-  <button class="btn btn-light my-2 my-sm-0" type="submit" name="search">Search</button>
-</form>
-</ul>
-
-</div>
-</nav>
-<div class="container mt-3">
-  <?php 
-
-  if ($_SESSION['id'] == $idCurrentProfile) $myProfile = true;
-  else $myProfile = false;
-  $server->show_coverphoto($server->get_imageblob($profile->get_cover_photo_id()),$idCurrentProfile);
-  $server->show_profilephoto($server->get_imageblob($profile->get_profile_photo_id()),$idCurrentProfile);
-  $server->show_name($profile->get_name(),$profile->get_surname());
-  $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
-  $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
-  $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
-  $userFriends = "/FiveStars/friends.php/".$idCurrentProfile;
+  <?php
+  $functions->show_navigationbar($idSession);
+  $functions->show_chat($idSession);
   ?>
-</div>
-<ul class="nav nav-tabs justify-content-center">
-  <li class="nav-item">
-    <a class="nav-link" href=<?php echo $userNameSurname;?> >Timeline</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href=<?php echo $userAlbums;?> >Albums</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href=<?php echo $userAbout;?> >About</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link active" href=<?php echo $userFriends;?> >Friends</a>
-  </li>
-</ul>
-<div class="container mt-3">
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Photo</th>
-        <th scope="col">Name</th>
-      </tr>
-    </thead>
-    <?php
-    $profiles = array();
-    $functions = new Functions;
-      $functions->recive_friends($idCurrentProfile,$profiles);
+  <div class="container mt-3 float-left w-75">
+    <?php 
+
+    if ($_SESSION['id'] == $idCurrentProfile) $myProfile = true;
+    else $myProfile = false;
+    $functions->show_coverphoto($profile->get_cover_photo_id(),$idCurrentProfile);
+    $functions->show_profilephoto($profile->get_profile_photo_id(),$idCurrentProfile);
+    $functions->show_name($profile->get_name(),$profile->get_surname());
+    $functions->display_stars($profile->get_rating());
     ?>
-    <tbody>
-
-      <?php
-      for ($i = 0; $i < sizeof($profiles); $i = $i + 1)
-      {
-        ?>
+    <h2><?php if ($profile->get_rating() == 0) echo 'No rating'; else echo $profile->get_rating();?></h2>
+    <?php
+    if ($idCurrentProfile !== $idSession) $functions->show_rate($idCurrentProfile,'profile');
+    $userNameSurname = "/FiveStars/profile.php/".$idCurrentProfile;
+    $userAbout = "/FiveStars/about.php/".$idCurrentProfile;
+    $userAlbums = "/FiveStars/albums.php/".$idCurrentProfile;
+    $userFriends = "/FiveStars/friends.php/".$idCurrentProfile;
+    ?>
+  </div>
+  <ul class="nav nav-tabs justify-content-center">
+    <li class="nav-item">
+      <a class="nav-link" href=<?php echo $userNameSurname;?> >Timeline</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href=<?php echo $userAlbums;?> >Albums</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href=<?php echo $userAbout;?> >About</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href=<?php echo $userFriends;?> >Friends</a>
+    </li>
+  </ul>
+  <div class="container mt-3">
+    <table class="table">
+      <thead>
         <tr>
-          <td>
-            <?php
-            $server->show_profilephotoicon($server->get_imageblob($profiles[$i]->get_profile_photo_id()));
-            ?>
-          </td>
-          <td>
-            <?php
-            echo '<a class="nav-link" href="/fivestars/profile.php/'.$profiles[$i]->get_id().'">'.$profiles[$i]->get_name()." ".$profiles[$i]->get_surname().'<span class="sr-only">(current)</span></a>';
-            ?>
-          </td>
-        <?php
-      }
+          <th scope="col">Photo</th>
+          <th scope="col">Name</th>
+        </tr>
+      </thead>
+      <?php
+      $profiles = array();
+      $functions = new Functions;
+      $functions->recive_friends($idCurrentProfile,$profiles);
       ?>
+      <tbody>
 
-    </tbody>
-  </table>
-  
-</div>
-</div>
+        <?php
+        for ($i = 0; $i < sizeof($profiles); $i = $i + 1)
+        {
+          ?>
+          <tr>
+            <td>
+              <?php
+              $functions->show_profilephotoicon($functions->get_imageblob($profiles[$i]->get_profile_photo_id()));
+              ?>
+            </td>
+            <td>
+              <?php
+              echo '<a class="nav-link d-inline" href="/fivestars/profile.php/'.$profiles[$i]->get_id().'">'.$profiles[$i]->get_name()." ".$profiles[$i]->get_surname().'<span class="sr-only">(current)</span></a>';
+              if ($idCurrentProfile == $idSession) {
+                echo '<form method="POST" action="/fivestars/server.php">';
+                echo '<button id="delete_Photo" class="btn btn-danger ml-3" onclick="delete_photo()">Remove</button>';
+                echo '</form>';
+              }
+              ?>
+            </td>
+            <?php
+          }
+          ?>
+
+        </tbody>
+      </table>
+      
+    </div>
+  </div>
 
 
 </body>

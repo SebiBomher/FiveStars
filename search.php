@@ -10,6 +10,7 @@ $idSession = $_SESSION['id'];
 $profile = new Profile();
 $server = new Functions();
 $profile = $server->get_profile($idSession);
+$functions = new Functions();
 ?>
 
 <!DOCTYPE html>
@@ -23,62 +24,13 @@ $profile = $server->get_profile($idSession);
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">FiveStars</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-     <span class="navbar-toggler-icon"></span>
-   </button>
-   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-     <ul class="navbar-nav mr-auto">
-       <li class="nav-item active">
-        <a class="nav-link" href="logout.php">Logout<span class="sr-only">(current)</span></a>
-      </li>
-    </ul>
-    <ul class="navbar-nav ml-auto">
-     <li class="nav-item active">
-      <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-      <?php
-      $profile1 = $server->get_profile($idSession);
-      $server->show_smallprofilephotodropdown($server->get_imageblob($profile1->get_profile_photo_id()),$idSession);
-      ?>
-    <?php endif ?>
-  </li>
-  <li class="nav-item active">
-    <?php  if (isset($_SESSION['name']) && isset($_SESSION['surname']) && isset($_SESSION['id'])) : ?>
-    <?php $userNameSurname = "/FiveStars/profile.php/".$_SESSION['id']; ?>
-    <a class="nav-link" href=<?php echo $userNameSurname; ?> id="profile_view"><?php echo $_SESSION['name'].' '.$_SESSION['surname']; ?><span class="sr-only">(current)</span></a>
-  <?php endif ?>
-</li>
-<li class="nav-item active">
-  <a class="nav-link" href="main.php">Home<span class="sr-only">(current)</span></a>
-</li>
-<form class="form-inline" method="POST" action="search.php">
-  <input class="form-control mr-sm-2" type="search" placeholder="Search" name="query" aria-label="Search">
-  <button class="btn btn-light my-2 my-sm-0" type="submit" name="search">Search</button>
-</form>
-</ul>
-
-</div>
-</nav>
-<div class="content">
- <!-- Mesaj de notificare -->
- <?php if (isset($_SESSION['success'])) : ?>
-  <div class="error success" >
-   <h3>
-    <?php 
-    echo $_SESSION['success']; 
-    unset($_SESSION['success']);
-    ?>
-  </h3>
-</div>
-<?php endif ?>
-
-<!-- Informatii despre userul logat -->
+  <?php 
+  $functions->show_navigationbar($idSession);
+  $functions->show_chat($idSession);
+  ?>
 
 
-</div>
-
-<table class="table">
+<table class="table position-absolute" style="z-index: -2;">
   <thead>
     <tr>
       <th scope="col">Photo</th>
