@@ -6,6 +6,7 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
+
 $uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
@@ -13,6 +14,7 @@ $idCurrentProfile = $uri_segments[3];
 $profile = new Profile();
 $functions = new Functions();
 $profile = $functions->get_profile($idCurrentProfile);
+if (strcmp($profile->get_privilege(),'administrator') == 0 || strcmp($profile->get_privilege(),'moderator') == 0) $isMod = 1; else $isMod = 0;
 ?>
 
 <!DOCTYPE html>
@@ -30,14 +32,15 @@ $profile = $functions->get_profile($idCurrentProfile);
 
   <?php 
   $functions->show_navigationbar($idSession);
-  $functions->show_chat($idSession);
+  //$functions->show_chat($idSession);
   ?>
-  <div class="container mt-3 float-left w-75">
+  <div class="container mt-3 w-75 text-center">
     <?php 
-
+    
     $functions->show_coverphoto($profile->get_cover_photo_id(),$idCurrentProfile);
     $functions->show_profilephoto($profile->get_profile_photo_id(),$idCurrentProfile);
     $functions->show_name($profile->get_name(),$profile->get_surname());
+    if ($isMod == 1) $functions->show_title($profile->get_privilege());
     $functions->display_stars($profile->get_rating());
     ?>
     <h2><?php if ($profile->get_rating() == 0) echo 'No rating'; else echo $profile->get_rating();?></h2>
@@ -63,21 +66,28 @@ $profile = $functions->get_profile($idCurrentProfile);
       <a class="nav-link" href=<?php echo $userFriends;?> >Friends</a>
     </li>
   </ul>
-  <div class="container text-center mt-3">
-    <?php  if (isset($_SESSION['id']) && $_SESSION['id'] != $idCurrentProfile) : ?>
-      <form class="form" action="/fivestars/functions.php "method="POST">
+  <div class="container mt-3 text-center">
+    <?php  if (isset($_SESSION['id']) && $_SESSION['id'] != $idCurrentProfile && !($functions->is_friend($idCurrentProfile))) : ?>
+      <form class="form" action="/fivestars/server.php "method="POST">
         <input class="text d-none" type="text" name="id" value=<?php echo $idCurrentProfile;?> >
         <button type="submit" class="btn btn-default" name="send_friend_request">Add friend</button>
       </form>
     <?php endif ?>
+    <?php  if (strcmp($_SESSION['status'],'administrator') == 0 && $isMod == 0) : ?>
+      <form class="form" action="/fivestars/server.php "method="POST">
+        <input class="text d-none" type="text" name="id" value=<?php echo $idCurrentProfile;?> >
+        <button type="submit" class="btn btn-default" name="make_mod">Make Moderator</button>
+      </form>
+    <?php endif ?>
     <?php  if (isset($_SESSION['id']) && $_SESSION['id'] == $idCurrentProfile) : ?>
-      <form class="form" action="/FiveStars/functions.php" method="POST" enctype="multipart/form-data">
+      <form class="form" action="/FiveStars/server.php" method="POST" enctype="multipart/form-data">
         <?php include('errors.php'); ?>
         <div class="form-group">
          <label>Status Update:</label>
          <textarea class="form-control" rows="3" cols="45" name="description" placeholder="What's on your mind?"></textarea>
        </div>
        <input class="text d-none" type="text" name="AlbumId" value="0" >
+       <input class="text d-none" type="text" name="NewProfilePicture" value="0">
        <label class="btn btn-default">
         Photo/video <input class="btn btn-defaulttype" type="file" name="image">
       </label>

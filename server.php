@@ -52,8 +52,14 @@ if (isset($_POST['reg_user'])) {
 
   	if (empty($phone)) $phone = NULL;
   	$query = "INSERT INTO user (Name, Surname, Email, Password, Score, Rating, profile_photo_id, cover_photo_id, Phone) 
-  	VALUES('$name','$surname', '$email', '$password', 0, 2.5, 4, 75, '$phone')";
+  	VALUES('$name','$surname', '$email', '$password', 0, 0, 4, 75, '$phone')";
   	mysqli_query($db, $query);
+
+  	$query = "SELECT * FROM user WHERE Email='$email' AND Password='$password'";
+  	$result = mysqli_query($db, $query);
+  	$row = mysqli_fetch_assoc($result);
+  	$id = $row['Id'];
+  	$status = $row[16];
 
   	$query = "INSERT INTO album (OwnerID, Name) 
   	VALUES('$id','Timeline'),('$id','Profile')";
@@ -72,6 +78,7 @@ if (isset($_POST['reg_user'])) {
   	if (!empty($phone)) { $_SESSION['phone'] = $phone; }
   	$_SESSION['email'] = $email;
   	$_SESSION['password'] = $password;
+  	$_SESSION['status'] = $status;
   	header('location: mail.php');
   }
 }
@@ -94,7 +101,7 @@ if (isset($_POST['login_user'])) {
 		$query = "SELECT * FROM user WHERE Email='$email' AND Password='$password'";
 
 		$results = mysqli_query($db, $query);
-
+		
 		if (mysqli_num_rows($results) == 1) {
 			$row = mysqli_fetch_row($results);
 			$_SESSION['id'] = $row[0];
@@ -102,6 +109,7 @@ if (isset($_POST['login_user'])) {
 			$_SESSION['surname'] = $row[2];
 			$_SESSION['email'] = $email;
 			$_SESSION['success'] = "You are now logged in";
+			$_SESSION['status'] = $row[16];
 			header('location: main.php');
 		}else {
 			array_push($errors, "Wrong email/password combination");
@@ -135,13 +143,10 @@ if (isset($_POST['upload_article'])){
 
 		if ($Albumid == 0)
 		{
-			$name = "Timeline";
-			echo $name." ".$user_id;
-			$querytemp = "SELECT * FROM album WHERE OwnerID = '$user_id' AND Name = '$name'";
+			$querytemp = "SELECT * FROM album WHERE OwnerID = '$user_id' AND Name = 'Timeline'";
 			$results = mysqli_query($db, $querytemp);
 			$rows = mysqli_fetch_row($results);
-			$Albumid = $rows['ID'];
-			echo $Albumid;
+			$Albumid = $rows[0];
 		}
 		$query = "INSERT INTO albumtophoto (PhotoId, AlbumId) VALUES ('$row[0]','$Albumid')";
 		mysqli_query($db, $query);
@@ -170,7 +175,6 @@ if (isset($_POST['upload_article'])){
 	}
 	else if (!(file_exists($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name']))){
 		if (!empty($description)){
-			echo "doar descriere";
 			$query = "INSERT INTO article (Author_Id, Description) VALUES ('$user_id','$description')";
 			mysqli_query($db, $query);
 		}
@@ -198,7 +202,7 @@ if (isset($_POST['view_photo'])){
 
 if (isset($_POST['send_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
-	$sql = "SELECT * FROM friendship WHERE User2 = $id";
+	$sql = "SELECT * FROM friendship WHERE User2 = $id AND User1 = $id";
 	$result = mysqli_query($db, $sql);
 	if (!$result || mysqli_num_rows($result) == 0)
 	{
@@ -211,18 +215,30 @@ if (isset($_POST['send_friend_request'])){
 		$sql = "INSERT INTO notifications (Profile_id, Type, Notification_Id) VALUES ('$id','friendship', '$notification_Id')";
 		mysqli_query($db, $sql);
 	}
-	header('location: /FiveStars/profile.php/'.$id);
+	//header('location: /FiveStars/profile.php/'.$id);
 }
 if (isset($_POST['accept_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
-	$sql = "UPDATE friendship SET Status = 'accepted' WHERE User1 = $id and User2 = ".$_SESSION['id'];
+	$sql = "UPDATE friendship SET Status = 'accepted' WHERE User1 = $id and User2 = $_SESSION[id]";
 	mysqli_query($db, $sql);
 	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
 }
 
 if (isset($_POST['reject_friend_request'])){
 	$id = mysqli_real_escape_string($db, $_POST['id']);
-	$sql = "UPDATE friendship SET Status = 'declined' WHERE User1 = $id and User2 = ".$_SESSION['id'];
+	$sql = "UPDATE friendship SET Status = 'declined' WHERE User1 = $id and User2 = $_SESSION[id]";
+	mysqli_query($db, $sql);
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
+}
+if (isset($_POST['remove_friend'])){
+	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$sql = "SELECT * FROM friendship WHERE User1 = '$id' AND User2 =' $_SESSION[id]' OR User1 = '$id' AND User2 = '$_SESSION[id]'";
+	$result = mysqli_query($db, $sql);
+	$row = $row = mysqli_fetch_row($result);
+	$notId = $row['FriendshipID'];
+	$sql = "DELETE FROM friendship WHERE User1 = '$id' AND User2 =' $_SESSION[id]' OR User1 = '$id' AND User2 = '$_SESSION[id]'";
+	mysqli_query($db, $sql);
+	$sql = "DELETE FROM notifications WHERE Notification_id = '$notId' AND Profile_id = '$_SESSION[id]' OR Notification_id = '$notId' AND Profile_id = '$id'";
 	mysqli_query($db, $sql);
 	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
 }
@@ -283,6 +299,50 @@ if (isset($_POST['change_password'])){
 	}
 	header('location: /FiveStars/about.php/'.$_SESSION['id']);
 }
+if (isset($_POST['edit_description'])){
+	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$newdescription = mysqli_real_escape_string($db, $_POST['newdescription']);
+	$sql = "UPDATE article SET Description = '$newdescription' WHERE Id = '$id'";
+	mysqli_query($db, $sql);
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
+}
+if (isset($_POST['delete_photo'])){
+	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$sql = "SELECT * FROM article WHERE Id = '$id'";
+	$result = mysqli_query($db, $sql);
+	$row = mysqli_fetch_assoc($result);
+	if (strcmp($_SESSION['status'],'administrator') == 0 || strcmp($_SESSION['status'],'moderator') == 0 && $row['Author_Id'] !== $_SESSION['id']){
+		$sql = "DELETE FROM reports WHERE Content_Id = '$id'";
+		mysqli_query($db, $sql);
+		
+	}
+	$sql = "DELETE FROM notes WHERE To_Id = '$id' AND Type='article'";
+	mysqli_query($db, $sql);
+	$sql = "DELETE FROM article WHERE Id = '$id'";
+	mysqli_query($db, $sql);
+	
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
+}
+if (isset ($_POST['delete_comment'])){
+	$id = mysqli_real_escape_string($db, $_POST['id']);
+	$sql = "DELETE FROM notifications WHERE Notification_Id = '$id' AND Type = 'comment'";
+	mysqli_query($db, $sql);
+	$sql = "DELETE FROM notes WHERE To_Id = '$id' AND Type='comment'";
+	mysqli_query($db, $sql);
+	$sql = "DELETE FROM comments WHERE Id = '$id'";
+	mysqli_query($db, $sql);
+}
+if (isset($_POST['report_content'])){
+	$reporter_id = mysqli_real_escape_string($db, $_POST['reporter_id']);
+	$article_id = mysqli_real_escape_string($db, $_POST['content_id']);
+	$sql = "SELECT * FROM reports WHERE Content_Id = '$article_id' AND Reporter_Id = '$reporter_id'";
+	$results = mysqli_query($db, $sql);
+	if (!$results || mysqli_num_rows($results) == 0){
+		$sql = "INSERT INTO reports (Content_Id, Reporter_Id) VALUES ('$article_id','$reporter_id')";
+		mysqli_query($db, $sql);
+	}
+	header('location: /FiveStars/profile.php/'.$_SESSION['id']);
+}
 if (isset($_POST['send_rate'])){
 	$id = mysqli_real_escape_string($db, $_POST['content_id']);
 	$type = mysqli_real_escape_string($db, $_POST['content_type']);
@@ -290,9 +350,17 @@ if (isset($_POST['send_rate'])){
 	$giver = $_SESSION['id'];
 	$sql = "SELECT * FROM notes WHERE Note_Giver = $_SESSION[id] AND To_Id = '$id'";
 	$resultsALL = mysqli_query($db, $sql);
-	if (!mysqli_num_rows($resultsALL) == 1) $sql = "INSERT INTO notes (Note_Giver, Type, To_Id, Note) VALUES ('$giver','$type','$id','$note')";
-	else $sql = "UPDATE notes SET Note = '$note' WHERE Note_Giver = '$giver' AND Type = '$type' AND To_Id = '$id'";
-	mysqli_query($db, $sql);
+	if (!mysqli_num_rows($resultsALL) == 1) {
+		$sql = "INSERT INTO notes (Note_Giver, Type, To_Id, Note) VALUES ('$giver','$type','$id','$note')";
+		mysqli_query($db, $sql);
+		$sql1 = "SELECT * FROM notes WHERE Note_Giver = '$giver' AND To_Id = '$id' AND Type = '$type' AND Note = '$note'";
+		$results = mysqli_query($db, $sql1);
+		$rows = mysqli_fetch_assoc($results);
+		$NotId = $rows['Id'];
+	} else {
+		$sql = "UPDATE notes SET Note = '$note' WHERE Note_Giver = '$giver' AND Type = '$type' AND To_Id = '$id'";
+		mysqli_query($db, $sql);
+	}
 	if (strcmp($type,'comment') == 0){
 		$sql = "SELECT * FROM comments WHERE Id = $id";
 		$results = mysqli_query($db, $sql);
@@ -310,13 +378,13 @@ if (isset($_POST['send_rate'])){
 			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
 				$newrating = $newrating + $rowcalc['Note'];
 			}
-			$newrating = $newrating + $note;
+			$newrating = ($newrating + $note) / $row['total_notes'];
 			$total_note = $row['total_notes'];
 		}
 		$sql = "UPDATE comments SET Rating = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
 		mysqli_query($db, $sql);
 		if (!mysqli_num_rows($resultsALL) == 1) {
-			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$NotId','note')";
 			mysqli_query($db, $sql);
 		}
 		header('location: /FiveStars/main.php/');
@@ -338,13 +406,13 @@ if (isset($_POST['send_rate'])){
 			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
 				$newrating = $newrating + $rowcalc['Note'];
 			}
-			$newrating = $newrating + $note;
+			$newrating = ($newrating + $note) / $row['total_notes'];
 			$total_note = $row['total_notes'];
 		}
 		$sql = "UPDATE article SET Note = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
 		mysqli_query($db, $sql);
 		if (!mysqli_num_rows($resultsALL) == 1) {
-			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$NotId','note')";
 			mysqli_query($db, $sql);
 		}
 		header('location: /FiveStars/main.php/');
@@ -355,8 +423,8 @@ if (isset($_POST['send_rate'])){
 		$row = mysqli_fetch_assoc($results);
 		$idtonotify = $row['Id'];
 		if (!mysqli_num_rows($resultsALL) == 1) {
-			$oldrating = $row['rating'];
-			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1); 
+			$oldrating = $row['Rating'];
+			$newrating = (($oldrating * $row['total_notes']) + $note)/($row['total_notes'] + 1);
 			$total_note = $row['total_notes'] + 1;
 		}
 		else {
@@ -366,16 +434,16 @@ if (isset($_POST['send_rate'])){
 			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
 				$newrating = $newrating + $rowcalc['Note'];
 			}
-			$newrating = $newrating + $note;
+			$newrating = ($newrating + $note) / $row['total_notes'];
 			$total_note = $row['total_notes'];
 		}
 		$sql = "UPDATE user SET Rating = '$newrating', total_notes = '$total_note' WHERE Id = '$id'";
 		mysqli_query($db, $sql);
 		if (!mysqli_num_rows($resultsALL) == 1) {
-			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$NotId','note')";
 			mysqli_query($db, $sql);
 		}
-		header('location: /FiveStars/profile.php/'.$id);
+			header('location: /FiveStars/profile.php/'.$id);
 	}
 	else if (strcmp($type,'album') == 0){
 		$sql = "SELECT * FROM album WHERE ID = $id";
@@ -394,17 +462,18 @@ if (isset($_POST['send_rate'])){
 			while ($rowcalc = mysqli_fetch_assoc($resultscalc)){
 				$newrating = $newrating + $rowcalc['Note'];
 			}
-			$newrating = $newrating + $note;
+			$newrating = ($newrating + $note) / $row['total_notes'];
 			$total_note = $row['total_notes'];
 		}
 		$sql = "UPDATE album SET Note = '$newrating', total_notes = '$total_note' WHERE ID = '$id'";
 		mysqli_query($db, $sql);
 		if (!mysqli_num_rows($resultsALL) == 1) {
-			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$id','note')";
+			$sql = "INSERT INTO notifications (Profile_id, Notification_id, Type) VALUES ('$idtonotify','$NotId','note')";
 			mysqli_query($db, $sql);
 		}
 		header('location: /FiveStars/albumview.php/'.$idtonotify.'/'.$id);
 	}
-	
+
 }
+
 ?>

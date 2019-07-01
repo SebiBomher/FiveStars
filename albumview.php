@@ -6,6 +6,7 @@ if (!isset($_SESSION['email']) || !isset($_SESSION['name']) || !isset($_SESSION[
  $_SESSION['msg'] = "You must log in first";
  header('location: login.php');
 }
+  
 $uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri_segments = explode('/', $uri_path);
 $idSession = $_SESSION['id'];
@@ -14,6 +15,7 @@ $idAlbum = $uri_segments[4];
 $profile = new Profile();
 $functions = new Functions();
 $profile = $functions->get_profile($idCurrentProfile);
+if (strcmp($profile->get_privilege(),'administrator') == 0 || strcmp($profile->get_privilege(),'moderator') == 0) $isMod = 1; else $isMod = 0;
 ?>
 
 <!DOCTYPE html>
@@ -28,7 +30,7 @@ $profile = $functions->get_profile($idCurrentProfile);
 </head>
 <?php
 $functions->show_navigationbar($idSession);
-$functions->show_chat($idSession);
+//$functions->show_chat($idSession);
 ?>
 <div class="container mt-3 float-left w-75">
   <?php 
@@ -38,6 +40,7 @@ $functions->show_chat($idSession);
   $functions->show_coverphoto($profile->get_cover_photo_id(),$idCurrentProfile);
   $functions->show_profilephoto($profile->get_profile_photo_id(),$idCurrentProfile);
   $functions->show_name($profile->get_name(),$profile->get_surname());
+  if ($isMod == 0) $functions->show_title($profile->get_privilege());
   $functions->display_stars($profile->get_rating());
   ?>
   <h2><?php if ($profile->get_rating() == 0) echo 'No rating'; else echo $profile->get_rating();?></h2>

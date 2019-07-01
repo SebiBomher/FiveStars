@@ -34,11 +34,11 @@
     
     $mail->AddAddress($_SESSION['email']);
 
-    $mail->Body = nl2br('Thanks for signing up '.$_SESSION['username'].'!
+    $mail->Body = nl2br('Thanks for signing up '.$_SESSION['Name'].' '.$_SESSION['Surname'].'!
     Your account has been created, you can login with the following credentials after you have activated your account by pressing the url below.
     
     Please click this link to activate your account:
-    http://www.SahOnline.com/verify.php?email='.$_SESSION['username'].'&hash='.$_SESSION['password']);
+    http://localhost/FiveStars/verify.php/'.$_SESSION['email'].'/'.$_SESSION['password']);
     $mail->Send();
 
     header('location: main.php');
